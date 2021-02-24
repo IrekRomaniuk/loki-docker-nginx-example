@@ -3,7 +3,7 @@ version: "3.4"
 services:
   my-nginx-service:
     image: nginx
-    container_name: my-nginx-service
+    container_name: nginx-service
     ports:
       - 8000:80
     environment:
@@ -12,16 +12,7 @@ services:
       driver: loki
       options:
         loki-url: http://localhost:3100/loki/api/v1/push
-        loki-external-labels: job=dockerlogs,owner=ruan,environment=development
-
-  logger-app:
-    image: ctovena/logger:0.1
-    container_name: logger
-    logging:
-      driver: loki
-      options:
-        loki-url: http://localhost:3100/loki/api/v1/push
-        loki-external-labels: job=dockerlogs,owner=ruan,environment=development
+        loki-external-labels: job=dockerlogs,owner=maniuk,environment=development
 
   grafana:
     image: grafana/grafana:7.2.2
@@ -41,3 +32,17 @@ services:
      - -config.file=/etc/config/loki.yaml
    ports:
      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:2.0.1
+    container_name: promtail
+    user: root
+    volumes:
+      - ./log:/var/log/test
+      - /var/log/system.log:/var/log/root/system.log
+      - ./config/promtail-local-config.yaml:/etc/config/promtail-local-config.yaml
+    entrypoint:
+      - /usr/bin/promtail
+      - -config.file=/etc/config/promtail-local-config.yaml
+    ports:
+      - "9080:9080"
